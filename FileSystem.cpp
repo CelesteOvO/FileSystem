@@ -13,7 +13,7 @@ void FileSystem::changeDirectory(const std::string &path) {
     }
 }
 
-void FileSystem::listDirectory() {
+void FileSystem::listDirectory() const {
     std::cout << "Directory: " << currentDirectory->name << std::endl;
     std::cout << "Subdirectories:" << std::endl;
     for (const auto& directory : currentDirectory->subdirectories) {
@@ -25,14 +25,14 @@ void FileSystem::listDirectory() {
     }
 }
 
-void FileSystem::createDirectory(const std::string &directoryName) {
+void FileSystem::createDirectory(const std::string &directoryName) const {
     Directory newDirectory;
     newDirectory.name = directoryName;
     newDirectory.parent = currentDirectory;
     currentDirectory->subdirectories.push_back(newDirectory);
 }
 
-void FileSystem::removeDirectory(const std::string &directoryName) {
+void FileSystem::removeDirectory(const std::string &directoryName) const {
     for (auto it = currentDirectory->subdirectories.begin(); it != currentDirectory->subdirectories.end(); ++it) {
         if (it->name == directoryName) {
             currentDirectory->subdirectories.erase(it);
@@ -42,7 +42,7 @@ void FileSystem::removeDirectory(const std::string &directoryName) {
     std::cout << "Directory not found." << std::endl;
 }
 
-void FileSystem::createFile(const std::string &fileName, std::string content) {
+void FileSystem::createFile(const std::string &fileName, std::string content) const {
     File newFile;
     newFile.name = fileName;
     newFile.content = content;
@@ -59,7 +59,7 @@ void FileSystem::openFile(const std::string &fileName) {
     std::cout << "File not found." << std::endl;
 }
 
-void FileSystem::readFile() {
+void FileSystem::readFile() const {
     if (currentFile) {
         std::cout << currentFile->content << std::endl;
     } else {
@@ -67,7 +67,7 @@ void FileSystem::readFile() {
     }
 }
 
-void FileSystem::ReWriteFile(const std::string &content) {
+void FileSystem::ReWriteFile(const std::string &content) const {
     if (currentFile) {
         currentFile->content = content;
     } else {
@@ -147,11 +147,30 @@ void FileSystem::importFile(const std::string &sourcePath, const std::string &de
 
 void FileSystem::exportFile(const std::string &sourceName, const std::string &destinationPath) {
     // 查找源文件
-    File* file = getFileByName(sourceName);
-    if (!file) {
+    std::vector<File*> files = getFileByName(sourceName);
+    if (files.empty()) {
         std::cout << "File not found: " << sourceName << std::endl;
         return;
     }
+
+    // 显示同名文件列表供用户选择
+    std::cout << "Multiple files found with the name '" << sourceName << "'. Please select the file to export:" << std::endl;
+    for (int i = 0; i < files.size(); ++i) {
+        std::cout << i+1 << ". " << files[i]->name << std::endl;
+    }
+
+    // 获取用户选择的文件索引
+    int selection;
+    std::cin >> selection;
+
+    // 验证用户选择的文件索引是否有效
+    if (selection < 1 || selection > files.size()) {
+        std::cout << "Invalid selection." << std::endl;
+        return;
+    }
+
+    // 获取用户选择的文件
+    File* selectedFile = files[selection - 1];
 
     // 打开目标文件
     std::ofstream destinationFile(destinationPath);
@@ -161,59 +180,9 @@ void FileSystem::exportFile(const std::string &sourceName, const std::string &de
     }
 
     // 写入文件内容到目标文件
-    destinationFile << file->content;
+    destinationFile << selectedFile->content;
 
     std::cout << "File exported successfully." << std::endl;
-}
-
-void FileSystem::displayTime() {
-    // 获取当前时间
-    auto now = std::chrono::system_clock::now();
-
-    // 将时间转换为字符串格式
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-    std::string timeString = std::ctime(&currentTime);
-
-    // 去除换行符
-    if (!timeString.empty() && timeString[timeString.length() - 1] == '\n') {
-        timeString.erase(timeString.length() - 1);
-    }
-
-    // 输出时间
-    std::cout << "Current time: " << timeString << std::endl;
-}
-
-void FileSystem::displayVersion() {
-// 获取系统版本信息
-    OSVERSIONINFO osvi;
-    ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
-    osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-    GetVersionEx(&osvi);
-
-    // 输出系统版本
-    std::cout << "Operating System Version: " << osvi.dwMajorVersion << "." << osvi.dwMinorVersion << std::endl;
-}
-
-void FileSystem::displayHelp() {
-    std::cout << "========================= Help =========================" << std::endl;
-    std::cout << "Available commands:" << std::endl;
-    std::cout << "cd <directory>      : Change current directory." << std::endl;
-    std::cout << "dir                 : List files and directories in the current directory." << std::endl;
-    std::cout << "mkdir <directory>   : Create a new directory." << std::endl;
-    std::cout << "rmdir <directory>   : Remove an empty directory." << std::endl;
-    std::cout << "create <file>       : Create a new file." << std::endl;
-    std::cout << "open <file>         : Open a file for reading or writing." << std::endl;
-    std::cout << "read                : Read the content of the current open file." << std::endl;
-    std::cout << "write <content>     : Write content to the current open file." << std::endl;
-    std::cout << "close               : Close the current open file." << std::endl;
-    std::cout << "lseek <position>    : Move the file pointer to the specified position." << std::endl;
-    std::cout << "help                : Display this help message." << std::endl;
-    std::cout << "time                : Display the system time." << std::endl;
-    std::cout << "ver                 : Display the system version." << std::endl;
-    std::cout << "rename <old> <new>  : Rename a file or directory." << std::endl;
-    std::cout << "import <source> <destination> : Import a file from the local disk to the virtual disk." << std::endl;
-    std::cout << "export <source> <destination> : Export a file from the virtual disk to the local disk." << std::endl;
-    std::cout << "========================================================" << std::endl;
 }
 
 std::vector<std::string> FileSystem::splitPath(const std::string& path) {
@@ -258,21 +227,55 @@ Directory *FileSystem::getDirectoryByPath(const std::string &path) {
     return current;
 }
 
-File *FileSystem::getFileByName(const std::string &fileName) {
+std::vector<File*> FileSystem::getFileByName(const std::string &fileName) const {
+    std::vector<File*> matchingFiles;
+
     Directory* current = currentDirectory;
 
     for (File& file : current->files) {
         if (file.name == fileName) {
-            return &file;
+            matchingFiles.push_back(&file);
         }
     }
-    return nullptr;  // 文件不存在
+
+    return matchingFiles;
+}
+
+std::vector<Directory *> FileSystem::getDirectoryByName(const std::string &directoryName) const {
+    std::vector<Directory*> matchingDirectories;
+
+    Directory* current = currentDirectory;
+
+    for (Directory& directory : current->subdirectories) {
+        if (directory.name == directoryName) {
+            matchingDirectories.push_back(&directory);
+        }
+    }
+
+    return matchingDirectories;
 }
 
 void FileSystem::clearCurrentPointers() {
     currentDirectory = nullptr;
     currentFile = nullptr;
 }
+
+std::string FileSystem::getDirectoryPath(Directory* directory) const {
+    std::string path = directory->name;
+    Directory* parent = directory->parent;
+
+    while (parent != nullptr) {
+        path = parent->name + "\\" + path;
+        parent = parent->parent;
+    }
+
+    return path;
+}
+
+std::string FileSystem::getFilePath(File* file) const {
+    return getDirectoryPath(file->parentDirectory) + "\\" + currentFile->name;
+}
+
 
 
 

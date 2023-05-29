@@ -11,26 +11,29 @@
 #include <chrono>
 #include <windows.h>
 
+struct Directory;
+
 // 文件结构
 struct File {
-    std::string name;
-    std::string content;
+    std::string name; // 文件名
+    std::string content; // 文件内容
+    Directory* parentDirectory; // 指向父目录的指针
 };
 
 // 目录结构
 struct Directory {
-    std::string name;
-    std::vector<Directory> subdirectories;
-    std::vector<File> files;
+    std::string name; // 文件夹名
+    std::vector<Directory> subdirectories; // 子文件夹
+    std::vector<File> files; // 子文件
     Directory* parent{}; // 指向父目录的指针
 };
 
 // 文件系统类
 class FileSystem {
-private:
-    Directory root;
+public:
+    Directory root; // 根目录
     Directory* currentDirectory; // 当前目录
-    File* currentFile;
+    File* currentFile; // 当前文件
     int currentFilePointer; // 当前文件指针
 
 public:
@@ -48,25 +51,25 @@ public:
     void changeDirectory(const std::string& path);
 
     // 列出当前目录内容
-    void listDirectory();
+    void listDirectory() const;
 
     // 创建目录
-    void createDirectory(const std::string& directoryName);
+    void createDirectory(const std::string& directoryName) const;
 
     // 删除目录
-    void removeDirectory(const std::string& directoryName);
+    void removeDirectory(const std::string& directoryName) const;
 
     // 创建文件
-    void createFile(const std::string &fileName, std::string string);
+    void createFile(const std::string &fileName, std::string string) const;
 
     // 打开文件
     void openFile(const std::string& fileName);
 
     // 读取文件内容
-    void readFile();
+    void readFile() const;
 
     // 重写文件内容
-    void ReWriteFile(const std::string& content);
+    void ReWriteFile(const std::string& content) const;
 
     // 指定位置追加文件内容
     void appendFileAtPosition(const std::string& content, int position);
@@ -89,16 +92,8 @@ public:
     // 导出文件到本地磁盘
     void exportFile(const std::string& sourceName, const std::string& destinationPath);
 
-    // 显示系统时间
-    static void displayTime();
 
-    // 显示系统版本
-    static void displayVersion();
-
-    // 显示帮助信息
-    static void displayHelp();
-
-private:
+public:
     // 辅助函数：拆分路径为目录名称
     static std::vector<std::string> splitPath(const std::string& path);
 
@@ -106,7 +101,16 @@ private:
     Directory* getDirectoryByPath(const std::string& path);
 
     // 辅助函数：根据文件名获取文件指针
-    File* getFileByName(const std::string& fileName);
+    std::vector<File*> getFileByName(const std::string& fileName) const;
+
+    // 辅助函数：根据文件夹名获取文件夹指针
+    std::vector<Directory*> getDirectoryByName(const std::string& directoryName) const;
+
+    // 辅助函数：获取当前目录路径
+    std::string getDirectoryPath(Directory* directory) const;
+
+    // 辅助函数：获取当前文件路径
+    std::string getFilePath(File* file) const;
 
     // 辅助函数：清空当前目录和文件的指针
     void clearCurrentPointers();
