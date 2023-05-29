@@ -101,10 +101,10 @@ public:
     Directory* getDirectoryByPath(const std::string& path);
 
     // 辅助函数：根据文件名获取文件指针
-    std::vector<File*> getFileByName(const std::string& fileName) const;
+    File* getFileByName(const std::string& fileName) const;
 
     // 辅助函数：根据文件夹名获取文件夹指针
-    std::vector<Directory*> getDirectoryByName(const std::string& directoryName) const;
+    Directory* getDirectoryByName(const std::string& directoryName) const;
 
     // 辅助函数：获取当前目录路径
     std::string getDirectoryPath(Directory* directory) const;

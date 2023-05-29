@@ -7,12 +7,15 @@
 
 #include <iostream>
 #include <sstream>
+#include <utility>
 #include "FileSystem.h"
 
 struct User {
     std::string username;
     std::string password;
     FileSystem fileSystem;
+
+    User(std::string name, std::string pass, FileSystem system) : username(std::move(name)), password(std::move(pass)), fileSystem(std::move(system)) {};
 };
 
 // 文件系统接口类

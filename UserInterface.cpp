@@ -21,7 +21,7 @@ void FileSystemInterface::executeCommand(const std::string &command) const {
     }
 
     std::string cmd = args[0];
-    args.erase(args.begin());
+    //args.erase(args.begin());
 
     if (cmd == "cd") {
         handleCd(args);
@@ -75,13 +75,13 @@ std::vector<std::string> FileSystemInterface::parseCommandArgs(const std::string
 
 void FileSystemInterface::displayPrompt() const {
     // 获取当前用户信息
-    // std::string username = currentUser->username;
+    std::string username = currentUser->username;
 
     // 获取当前目录信息
     std::string currentDir = fileSystem->getDirectoryPath(fileSystem->currentDirectory);
 
     // 显示命令提示符
-    //std::cout << username << "@" << currentDir << " $ ";
+    std::cout << username << "\\" << currentDir /*<< ">"*/;
 }
 
 void FileSystemInterface::displayWelcomeMessage() {
@@ -269,7 +269,7 @@ void FileSystemInterface::handleLseek(const std::vector<std::string> &args) cons
     // 定位文件指针
     fileSystem->seekFile(position);
 
-    std::cout << "File pointer has been set to position " << position << std::endl;
+    // std::cout << "File pointer has been set to position " << position << std::endl;
 }
 
 void FileSystemInterface::handleHelp() {
@@ -331,72 +331,42 @@ void FileSystemInterface::handleRename(const std::vector<std::string> &args) con
     const std::string& oldName = args[1];
     const std::string& newName = args[2];
 
-    std::vector<File *> existingFile = fileSystem->getFileByName(oldName);
-    std::vector<Directory *> existingDirectory = fileSystem->getDirectoryByName(oldName);
+    // 检查是否存在同名的文件或文件夹
+    File* existingFile = fileSystem->getFileByName(newName);
+    Directory* existingDirectory = fileSystem->getDirectoryByPath(newName);
 
-    int choice = 0;
-    if (!existingFile.empty() && !existingDirectory.empty()) {
-        std::cout << "File or directory with the same name already exists.\n";
+    if (existingFile != nullptr || existingDirectory != nullptr) {
+        std::cout << "A file or directory with the same name already exists.\n";
         std::cout << "Please select the object to rename:\n";
         std::cout << "1. File\n";
         std::cout << "2. Directory\n";
         std::cout << "Enter your choice (1 or 2): ";
 
-        std::cin >> choice;
-    }
-    if(existingFile.size() > 1 || choice == 1){
-        std::cout << "Multiple files found with the name '" << oldName << "'. Please select the file to export:" << std::endl;
-        for (int i = 0; i < existingFile.size(); ++i) {
-            std::cout << i+1 << ". " << fileSystem->getDirectoryPath(existingFile[i]->parentDirectory)  << std::endl;
+        std::string choiceStr;
+        std::getline(std::cin, choiceStr);
+        int choice = std::stoi(choiceStr);
+
+        if (choice == 1) {
+            if (existingFile != nullptr) {
+                std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
+                existingFile->name = newName;
+                std::cout << "File renamed successfully.\n";
+            } else {
+                std::cout << "Invalid choice. No file found with the given name.\n";
+            }
+        } else if (choice == 2) {
+            if (existingDirectory != nullptr) {
+                std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
+                existingDirectory->name = newName;
+                std::cout << "Directory renamed successfully.\n";
+            } else {
+                std::cout << "Invalid choice. No directory found with the given name.\n";
+            }
+        } else {
+            std::cout << "Invalid choice.\n";
         }
-        // 获取用户选择的文件索引
-        int selection;
-        std::cin >> selection;
-
-        // 验证用户选择的文件索引是否有效
-        if (selection < 1 || selection > existingFile.size()) {
-            std::cout << "Invalid selection." << std::endl;
-            return;
-        }
-
-        // 获取用户选择的文件
-        File* selectedFile = existingFile[selection - 1];
-
-        std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
-        selectedFile->name = newName;
-        std::cout << "File renamed successfully.\n";
-    }
-    else if(existingDirectory.size() > 1 || choice == 2){
-        std::cout << "Multiple directory found with the name '" << oldName << "'. Please select the directory to export:" << std::endl;
-        for (int i = 0; i < existingDirectory.size(); ++i) {
-            std::cout << i+1 << ". " << fileSystem->getDirectoryPath(existingDirectory[i])  << std::endl;
-        }
-        // 获取用户选择的文件索引
-        int selection;
-        std::cin >> selection;
-
-        // 验证用户选择的文件索引是否有效
-        if (selection < 1 || selection > existingDirectory.size()) {
-            std::cout << "Invalid selection." << std::endl;
-            return;
-        }
-
-        // 获取用户选择的目录
-        Directory* selectedDirectory = existingDirectory[selection - 1];
-        std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
-        selectedDirectory->name = newName;
-        std::cout << "Directory renamed successfully.\n";
-
-    }else if(existingFile.empty() && existingDirectory.empty()){
-        std::cout << "File or directory with the same name does not exist.\n";
-    }else if(existingFile.size() == 1){
-        std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
-        existingFile[0]->name = newName;
-        std::cout << "File renamed successfully.\n";
-    }else if(existingDirectory.size() == 1){
-        std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
-        existingDirectory[0]->name = newName;
-        std::cout << "Directory renamed successfully.\n";
+    } else {
+        std::cout << "No file or directory found with the given name.\n";
     }
 }
 
@@ -419,7 +389,7 @@ void FileSystemInterface::handleImport(const std::vector<std::string> &args) con
     }
 
     // 检查目标文件名是否已存在
-    if (!fileSystem->getFileByName(destinationName).empty() || !fileSystem->getDirectoryByName(destinationName).empty()) {
+    if (fileSystem->getFileByName(destinationName) != nullptr || fileSystem->getDirectoryByName(destinationName) != nullptr){
         std::cout << "A file or directory with the same name already exists: " << destinationName << std::endl;
         return;
     }
@@ -442,8 +412,8 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
     const std::string& destinationPath = args[1];
 
     // 检查源文件是否存在
-    std::vector<File *> sourceFile = fileSystem->getFileByName(sourceName);
-    if (sourceFile.empty()) {
+    File* sourceFile = fileSystem->getFileByName(sourceName);
+    if (sourceFile == nullptr) {
         std::cout << "File not found: " << sourceName << std::endl;
         return;
     }
@@ -454,32 +424,10 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
         std::cout << "Failed to open destination file: " << destinationPath << std::endl;
         return;
     }
-    File* selectedFile;
-    if(sourceFile.size() > 1) {
-        std::cout << "Multiple files found with the name '" << sourceName << "'. Please select the file to export:" << std::endl;
-        for (int i = 0; i < sourceFile.size(); ++i) {
-            std::cout << i+1 << ". " << fileSystem->getDirectoryPath(sourceFile[i]->parentDirectory)  << std::endl;
-        }
-        // 获取用户选择的文件索引
-        int selection;
-        std::cin >> selection;
-
-        // 验证用户选择的文件索引是否有效
-        if (selection < 1 || selection > sourceFile.size()) {
-            std::cout << "Invalid selection." << std::endl;
-            return;
-        }
-
-        // 获取用户选择的文件
-        selectedFile = sourceFile[selection - 1];
-    }else {
-        selectedFile = sourceFile[0];
-    }
 
     // 写入文件内容到目标文件
-    destinationFile << selectedFile->content;
+    destinationFile << sourceFile->content;
 
     std::cout << "File exported successfully." << std::endl;
 }
-
 

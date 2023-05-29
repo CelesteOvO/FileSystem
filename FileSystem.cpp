@@ -91,7 +91,7 @@ void FileSystem::appendFileAtPosition(const std::string &content, int position) 
 void FileSystem::closeFile() {
     currentFile = nullptr;
     currentFilePointer = 0;
-    std::cout << "File closed." << std::endl;
+    // std::cout << "File closed." << std::endl;
 }
 
 void FileSystem::seekFile(int position) {
@@ -147,30 +147,11 @@ void FileSystem::importFile(const std::string &sourcePath, const std::string &de
 
 void FileSystem::exportFile(const std::string &sourceName, const std::string &destinationPath) const {
     // 查找源文件
-    std::vector<File*> files = getFileByName(sourceName);
-    if (files.empty()) {
+    File* file = getFileByName(sourceName);
+    if (file == nullptr) {
         std::cout << "File not found: " << sourceName << std::endl;
         return;
     }
-
-    // 显示同名文件列表供用户选择
-    std::cout << "Multiple files found with the name '" << sourceName << "'. Please select the file to export:" << std::endl;
-    for (int i = 0; i < files.size(); ++i) {
-        std::cout << i+1 << ". " << files[i]->name << std::endl;
-    }
-
-    // 获取用户选择的文件索引
-    int selection;
-    std::cin >> selection;
-
-    // 验证用户选择的文件索引是否有效
-    if (selection < 1 || selection > files.size()) {
-        std::cout << "Invalid selection." << std::endl;
-        return;
-    }
-
-    // 获取用户选择的文件
-    File* selectedFile = files[selection - 1];
 
     // 打开目标文件
     std::ofstream destinationFile(destinationPath);
@@ -180,7 +161,7 @@ void FileSystem::exportFile(const std::string &sourceName, const std::string &de
     }
 
     // 写入文件内容到目标文件
-    destinationFile << selectedFile->content;
+    destinationFile << file->content;
 
     std::cout << "File exported successfully." << std::endl;
 }
@@ -227,32 +208,26 @@ Directory *FileSystem::getDirectoryByPath(const std::string &path) {
     return current;
 }
 
-std::vector<File*> FileSystem::getFileByName(const std::string &fileName) const {
-    std::vector<File*> matchingFiles;
-
+File* FileSystem::getFileByName(const std::string &fileName) const {
     Directory* current = currentDirectory;
 
     for (File& file : current->files) {
         if (file.name == fileName) {
-            matchingFiles.push_back(&file);
+            return &file;
         }
     }
-
-    return matchingFiles;
+    return nullptr;  // 文件不存在
 }
 
-std::vector<Directory *> FileSystem::getDirectoryByName(const std::string &directoryName) const {
-    std::vector<Directory*> matchingDirectories;
-
+Directory * FileSystem::getDirectoryByName(const std::string &directoryName) const {
     Directory* current = currentDirectory;
 
     for (Directory& directory : current->subdirectories) {
         if (directory.name == directoryName) {
-            matchingDirectories.push_back(&directory);
+            return &directory;
         }
     }
-
-    return matchingDirectories;
+    return nullptr;  // 目录不存在
 }
 
 void FileSystem::clearCurrentPointers() {
