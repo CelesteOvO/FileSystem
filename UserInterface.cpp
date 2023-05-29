@@ -207,6 +207,11 @@ void FileSystemInterface::handleWrite(const std::vector<std::string> &args) cons
         std::cout << "Invalid command. Usage: write <file_name>" << std::endl;
         return;
     }
+    // 获取文件名
+    const std::string& fileName = args[1];
+
+    // 调用文件系统类的打开文件方法
+    fileSystem->openFile(fileName);
 
     // 检查文件是否已打开
     if (fileSystem->currentFile == nullptr) {
@@ -290,7 +295,7 @@ void FileSystemInterface::handleHelp() {
     std::cout << "ver                 : Display the system version." << std::endl;
     std::cout << "rename <old> <new>  : Rename a file or directory." << std::endl;
     std::cout << "import <source> <destination> : Import a file from the local disk to the virtual disk." << std::endl;
-    std::cout << "export <source> <destination> : Export a file from the virtual disk to the local disk." << std::endl;
+    std::cout << "export <destination> <source> : Export a file from the virtual disk to the local disk." << std::endl;
     std::cout << "========================================================" << std::endl;
 }
 
@@ -332,10 +337,10 @@ void FileSystemInterface::handleRename(const std::vector<std::string> &args) con
     const std::string& newName = args[2];
 
     // 检查是否存在同名的文件或文件夹
-    File* existingFile = fileSystem->getFileByName(newName);
-    Directory* existingDirectory = fileSystem->getDirectoryByPath(newName);
+    File* existingFile = fileSystem->getFileByName(oldName);
+    Directory* existingDirectory = fileSystem->getDirectoryByPath(oldName);
 
-    if (existingFile != nullptr || existingDirectory != nullptr) {
+    if (existingFile != nullptr && existingDirectory != nullptr) {
         std::cout << "A file or directory with the same name already exists.\n";
         std::cout << "Please select the object to rename:\n";
         std::cout << "1. File\n";
@@ -365,37 +370,48 @@ void FileSystemInterface::handleRename(const std::vector<std::string> &args) con
         } else {
             std::cout << "Invalid choice.\n";
         }
+    } else if(existingFile != nullptr) {
+        std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
+        existingFile->name = newName;
+        std::cout << "File renamed successfully.\n";
+    } else if(existingDirectory != nullptr) {
+        std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
+        existingDirectory->name = newName;
+        std::cout << "Directory renamed successfully.\n";
     } else {
         std::cout << "No file or directory found with the given name.\n";
     }
 }
 
 void FileSystemInterface::handleImport(const std::vector<std::string> &args) const {
-    // 检查参数数量
     if (args.size() < 2) {
-        std::cout << "Invalid command syntax. Usage: import <sourcePath> <destinationName>" << std::endl;
+        std::cout << "Usage: import <destination> <source>" << std::endl;
         return;
     }
 
-    // 获取源文件路径和目标文件名
-    const std::string& sourcePath = args[0];
-    const std::string& destinationName = args[1];
+    const std::string& destinationPath = args[1];
+    const std::string& sourceName = args[2];
 
-    // 检查源文件是否存在
-    std::ifstream sourceFile(sourcePath);
-    if (!sourceFile) {
-        std::cout << "Failed to open source file: " << sourcePath << std::endl;
+    // 打开源文件
+    std::ifstream inputFile(destinationPath + '\\' + sourceName);
+    if (!inputFile) {
+        std::cout << "Failed to open source file: " << sourceName << std::endl;
         return;
     }
 
-    // 检查目标文件名是否已存在
-    if (fileSystem->getFileByName(destinationName) != nullptr || fileSystem->getDirectoryByName(destinationName) != nullptr){
-        std::cout << "A file or directory with the same name already exists: " << destinationName << std::endl;
-        return;
-    }
+    // 读取源文件内容
+    std::stringstream buffer;
+    buffer << inputFile.rdbuf();
+    std::string fileContent = buffer.str();
 
-    // 创建新文件并设置内容
-    fileSystem->createFile(destinationName, std::string(std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()));
+    // 创建新文件
+    File newFile;
+    newFile.name = sourceName;
+    newFile.content = fileContent;
+
+    // 导入文件到当前目录
+    Directory* currentDirectory = fileSystem->currentDirectory;
+    currentDirectory->files.push_back(newFile);
 
     std::cout << "File imported successfully." << std::endl;
 }
@@ -408,8 +424,8 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
     }
 
     // 获取源文件名和目标文件路径
-    const std::string& sourceName = args[0];
-    const std::string& destinationPath = args[1];
+    const std::string& sourceName = args[1];
+    const std::string& destinationPath = args[2];
 
     // 检查源文件是否存在
     File* sourceFile = fileSystem->getFileByName(sourceName);
@@ -418,15 +434,18 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
         return;
     }
 
+    // 构建完整的目标路径
+    std::string fullDestination = destinationPath + "\\" + sourceName;
+
     // 打开目标文件
-    std::ofstream destinationFile(destinationPath);
-    if (!destinationFile) {
-        std::cout << "Failed to open destination file: " << destinationPath << std::endl;
+    std::ofstream outputFile(fullDestination);
+    if (!outputFile) {
+        std::cout << "Failed to open destination file: " << fullDestination << std::endl;
         return;
     }
 
     // 写入文件内容到目标文件
-    destinationFile << sourceFile->content;
+    outputFile << sourceFile->content;
 
     std::cout << "File exported successfully." << std::endl;
 }
