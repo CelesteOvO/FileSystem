@@ -12,7 +12,7 @@
 struct User {
     std::string username;
     std::string password;
-    Directory rootDirectory;
+    FileSystem fileSystem;
 };
 
 // 文件系统接口类
@@ -21,11 +21,13 @@ public:
     FileSystem* fileSystem;
     User* currentUser;
 public:
+    FileSystemInterface(FileSystem* fs, User* user) : fileSystem(fs), currentUser(user) {}
+public:
     // 启动文件系统
     void start();
 
     // 解析并执行命令
-    void executeCommand(const std::string& command);
+    void executeCommand(const std::string& command) const;
 
     // 解析命令参数
     static std::vector<std::string> parseCommandArgs(const std::string& command);

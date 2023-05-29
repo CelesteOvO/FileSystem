@@ -107,7 +107,7 @@ void FileSystem::seekFile(int position) {
     }
 }
 
-void FileSystem::renameDirectory(const std::string &oldName, const std::string &newName) {
+void FileSystem::renameDirectory(const std::string &oldName, const std::string &newName) const {
     for (auto& directory : currentDirectory->subdirectories) {
         if (directory.name == oldName) {
             directory.name = newName;
@@ -117,7 +117,7 @@ void FileSystem::renameDirectory(const std::string &oldName, const std::string &
     std::cout << "Directory not found." << std::endl;
 }
 
-void FileSystem::renameFile(const std::string &oldName, const std::string &newName) {
+void FileSystem::renameFile(const std::string &oldName, const std::string &newName) const {
 
     for (auto& file : currentDirectory->files) {
         if (file.name == oldName) {
@@ -128,7 +128,7 @@ void FileSystem::renameFile(const std::string &oldName, const std::string &newNa
     std::cout << "File not found." << std::endl;
 }
 
-void FileSystem::importFile(const std::string &sourcePath, const std::string &destinationName) {
+void FileSystem::importFile(const std::string &sourcePath, const std::string &destinationName) const {
     // 读取源文件内容
     std::ifstream sourceFile(sourcePath);
     if (!sourceFile) {
@@ -145,7 +145,7 @@ void FileSystem::importFile(const std::string &sourcePath, const std::string &de
     std::cout << "File imported successfully." << std::endl;
 }
 
-void FileSystem::exportFile(const std::string &sourceName, const std::string &destinationPath) {
+void FileSystem::exportFile(const std::string &sourceName, const std::string &destinationPath) const {
     // 查找源文件
     std::vector<File*> files = getFileByName(sourceName);
     if (files.empty()) {

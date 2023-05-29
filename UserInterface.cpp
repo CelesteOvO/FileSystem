@@ -14,7 +14,7 @@ void FileSystemInterface::start() {
     }
 }
 
-void FileSystemInterface::executeCommand(const std::string &command) {
+void FileSystemInterface::executeCommand(const std::string &command) const {
     std::vector<std::string> args = parseCommandArgs(command);
     if (args.empty()) {
         return;
@@ -75,13 +75,13 @@ std::vector<std::string> FileSystemInterface::parseCommandArgs(const std::string
 
 void FileSystemInterface::displayPrompt() const {
     // 获取当前用户信息
-    std::string username = currentUser->username;
+    // std::string username = currentUser->username;
 
     // 获取当前目录信息
     std::string currentDir = fileSystem->getDirectoryPath(fileSystem->currentDirectory);
 
     // 显示命令提示符
-    std::cout << username << "@" << currentDir << " $ ";
+    //std::cout << username << "@" << currentDir << " $ ";
 }
 
 void FileSystemInterface::displayWelcomeMessage() {
@@ -481,10 +481,5 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
 
     std::cout << "File exported successfully." << std::endl;
 }
-
-
-
-
-
 
 

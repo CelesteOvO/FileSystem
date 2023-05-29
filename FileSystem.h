@@ -81,16 +81,16 @@ public:
     void seekFile(int position);
 
     // 重命名文件
-    void renameFile(const std::string& oldName, const std::string& newName);
+    void renameFile(const std::string& oldName, const std::string& newName) const;
 
     // 重命名目录
-    void renameDirectory(const std::string& oldName, const std::string& newName);
+    void renameDirectory(const std::string& oldName, const std::string& newName) const;
 
     // 导入文件到本地磁盘
-    void importFile(const std::string& sourcePath, const std::string& destinationName);
+    void importFile(const std::string& sourcePath, const std::string& destinationName) const;
 
     // 导出文件到本地磁盘
-    void exportFile(const std::string& sourceName, const std::string& destinationPath);
+    void exportFile(const std::string& sourceName, const std::string& destinationPath) const;
 
 
 public:
