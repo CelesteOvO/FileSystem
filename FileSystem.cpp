@@ -4,8 +4,8 @@
 
 #include "FileSystem.h"
 
-void FileSystem::changeDirectory(const std::string &name) {
-    Directory* directory = getDirectoryByName(name); // 根据路径获取目录
+void FileSystem::changeDirectory(const std::string &path) {
+    Directory* directory = getDirectoryByPath(path); // 根据路径获取目录
     if (directory) {
         currentDirectory = directory; // 切换当前目录
     } else {
@@ -222,9 +222,9 @@ void FileSystem::exportFile(const std::string &sourceName, const std::string &de
 }
 
 std::vector<std::string> FileSystem::splitPath(const std::string& path) {
-    std::vector<std::string> directories;
-    std::string::size_type prev = 0;
-    std::string::size_type pos = path.find('/', prev);
+    std::vector<std::string> directories; // 存储拆分后的目录名称
+    std::string::size_type prev = 0; // 上一个目录名称的末尾位置
+    std::string::size_type pos = path.find('/', prev); // 当前目录名称的末尾位置
 
     while (pos != std::string::npos) {
         std::string directoryName = path.substr(prev, pos - prev);
@@ -243,13 +243,13 @@ std::vector<std::string> FileSystem::splitPath(const std::string& path) {
 
 Directory *FileSystem::getDirectoryByPath(const std::string &path) {
     Directory* current = &root;
-    std::vector<std::string> directories = splitPath(path);
+    std::vector<std::string> directories = splitPath(path); // 拆分路径
 
-    for (const std::string& directoryName : directories) {
+    for (const std::string& directoryName : directories) { // 遍历路径中的目录
         bool found = false;
-        for (Directory& directory : current->subdirectories) {
-            if (directory.name == directoryName) {
-                current = &directory;
+        for (Directory& directory : current->subdirectories) { // 遍历当前目录的子目录
+            if (directory.name == directoryName) { // 找到目录
+                current = &directory; // 进入子目录
                 found = true;
                 break;
             }
@@ -290,7 +290,7 @@ void FileSystem::clearCurrentPointers() {
     currentFile = nullptr;
 }
 
-std::string FileSystem::getDirectoryPath(Directory* directory) const {
+std::string FileSystem::getDirectoryPath(Directory* directory) {
     std::string path = directory->name;
     Directory* parent = directory->parent;
 
@@ -302,9 +302,6 @@ std::string FileSystem::getDirectoryPath(Directory* directory) const {
     return path;
 }
 
-std::string FileSystem::getFilePath(File* file) const {
-    return getDirectoryPath(file->parentDirectory) + "\\" + currentFile->name;
-}
 
 
 

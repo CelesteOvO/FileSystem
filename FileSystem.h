@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 #include <chrono>
+#include <stack>
 #include <windows.h>
 
 struct Directory;
@@ -93,12 +94,6 @@ public:
 
 
 public:
-    // 辅助函数：拆分路径为目录名称
-    static std::vector<std::string> splitPath(const std::string& path);
-
-    // 辅助函数：根据路径获取目录指针
-    Directory* getDirectoryByPath(const std::string& path);
-
     // 辅助函数：根据文件名获取文件指针
     File* getFileByName(const std::string& fileName) const;
 
@@ -106,10 +101,13 @@ public:
     Directory* getDirectoryByName(const std::string& directoryName) const;
 
     // 辅助函数：获取当前目录路径
-    std::string getDirectoryPath(Directory* directory) const;
+    static std::string getDirectoryPath(Directory* directory) ;
 
-    // 辅助函数：获取当前文件路径
-    std::string getFilePath(File* file) const;
+    // 辅助函数：拆分路径为目录名称
+    static std::vector<std::string> splitPath(const std::string& path);
+
+    // 辅助函数：根据路径获取目录指针
+    Directory* getDirectoryByPath(const std::string& path);
 
     // 辅助函数：清空当前目录和文件的指针
     void clearCurrentPointers();
