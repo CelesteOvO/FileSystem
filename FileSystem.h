@@ -7,6 +7,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <utility>
 #include <vector>
 #include <chrono>
 #include <windows.h>
@@ -80,11 +82,8 @@ public:
     // 定位文件指针
     void seekFile(int position);
 
-    // 重命名文件
-    void renameFile(const std::string& oldName, const std::string& newName) const;
-
-    // 重命名目录
-    void renameDirectory(const std::string& oldName, const std::string& newName) const;
+    // 重命名
+    void rename(const std::string& oldName, const std::string& newName) const;
 
     // 导入文件到本地磁盘
     void importFile(const std::string& sourcePath, const std::string& destinationName) const;

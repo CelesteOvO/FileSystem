@@ -4,10 +4,8 @@
 
 #include "FileSystem.h"
 
-#include <utility>
-
-void FileSystem::changeDirectory(const std::string &path) {
-    Directory* directory = getDirectoryByPath(path); // 根据路径获取目录
+void FileSystem::changeDirectory(const std::string &name) {
+    Directory* directory = getDirectoryByName(name); // 根据路径获取目录
     if (directory) {
         currentDirectory = directory; // 切换当前目录
     } else {
@@ -28,8 +26,34 @@ void FileSystem::listDirectory() const {
 }
 
 void FileSystem::createDirectory(const std::string &directoryName) const {
+    // 检查当前目录下是否存在同名的文件夹
+    bool duplicateFound = false;
+    int duplicateCount = 1;
+    std::string newName = directoryName;
+
+    for (const auto& subdirectory : currentDirectory->subdirectories) {
+        if (subdirectory.name == newName) {
+            duplicateFound = true;
+            break;
+        }
+    }
+
+    // 如果存在同名的文件夹，则在新目录名后面添加适当的编号
+    if(duplicateFound) {
+        newName = directoryName + "_" + std::to_string(duplicateCount);
+        std::cout << "Directory already exists. Renaming to " << newName << std::endl;
+        duplicateCount++;
+
+        duplicateFound = false;
+        for (const auto& subdirectory : currentDirectory->subdirectories) {
+            if (subdirectory.name == newName) {
+                duplicateFound = true;
+                break;
+            }
+        }
+    }
     Directory newDirectory; // 创建新目录
-    newDirectory.name = directoryName; // 设置目录名
+    newDirectory.name = newName; // 设置目录名
     newDirectory.parent = currentDirectory; // 设置父目录
     currentDirectory->subdirectories.push_back(newDirectory); // 将新目录添加到当前目录的子目录中
 }
@@ -111,61 +135,88 @@ void FileSystem::seekFile(int position) {
     }
 }
 
-void FileSystem::renameDirectory(const std::string &oldName, const std::string &newName) const {
-    for (auto& directory : currentDirectory->subdirectories) {
-        if (directory.name == oldName) {
-            directory.name = newName;
-            return;
+void FileSystem::rename(const std::string &oldName, const std::string &newName) const {
+    File* existingFile = getFileByName(oldName);
+    Directory* existingDirectory = getDirectoryByName(oldName);
+
+    if (existingFile != nullptr && existingDirectory != nullptr) {
+        std::cout << "A file or directory with the same name already exists.\n";
+        std::cout << "Please select the object to rename:\n";
+        std::cout << "1. File\n";
+        std::cout << "2. Directory\n";
+        std::cout << "Enter your choice (1 or 2): ";
+
+        int choice;
+        std::cin >> choice;
+
+        if (choice == 1) {
+            std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
+            existingFile->name = newName;
+            std::cout << "File renamed successfully.\n";
+        } else if (choice == 2) {
+            std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
+            existingDirectory->name = newName;
+            std::cout << "Directory renamed successfully.\n";
+        } else {
+            std::cout << "Invalid choice.\n";
         }
+    } else if(existingFile != nullptr) {
+        std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
+        existingFile->name = newName;
+        std::cout << "File renamed successfully.\n";
+    } else if(existingDirectory != nullptr) {
+        std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
+        existingDirectory->name = newName;
+        std::cout << "Directory renamed successfully.\n";
+    } else {
+        std::cout << "No file or directory found with the given name.\n";
     }
-    std::cout << "Directory not found." << std::endl;
 }
 
-void FileSystem::renameFile(const std::string &oldName, const std::string &newName) const {
-
-    for (auto& file : currentDirectory->files) {
-        if (file.name == oldName) {
-            file.name = newName;
-            return;
-        }
-    }
-    std::cout << "File not found." << std::endl;
-}
-
-void FileSystem::importFile(const std::string &sourcePath, const std::string &destinationName) const {
-    // 读取源文件内容
-    std::ifstream sourceFile(sourcePath);
-    if (!sourceFile) {
-        std::cout << "Failed to open source file: " << sourcePath << std::endl;
+void FileSystem::importFile(const std::string &destinationPath, const std::string &sourceName) const {
+    // 打开源文件
+    std::ifstream inputFile(destinationPath + '\\' + sourceName);
+    if (!inputFile) {
+        std::cout << "Failed to open source file: " << sourceName << std::endl;
         return;
     }
 
-    std::string content((std::istreambuf_iterator<char>(sourceFile)),
-                        (std::istreambuf_iterator<char>()));
+    // 读取源文件内容
+    std::stringstream buffer;
+    buffer << inputFile.rdbuf();
+    std::string fileContent = buffer.str();
 
-    // 创建目标文件并写入内容
-    createFile(destinationName, content);
+    // 创建新文件
+    File newFile;
+    newFile.name = sourceName;
+    newFile.content = fileContent;
+
+    // 导入文件到当前目录
+    currentDirectory->files.push_back(newFile);
 
     std::cout << "File imported successfully." << std::endl;
 }
 
 void FileSystem::exportFile(const std::string &sourceName, const std::string &destinationPath) const {
-    // 查找源文件
-    File* file = getFileByName(sourceName);
-    if (file == nullptr) {
+    // 检查源文件是否存在
+    File* sourceFile = getFileByName(sourceName);
+    if (sourceFile == nullptr) {
         std::cout << "File not found: " << sourceName << std::endl;
         return;
     }
 
+    // 构建完整的目标路径
+    std::string fullDestination = destinationPath + "\\" + sourceName;
+
     // 打开目标文件
-    std::ofstream destinationFile(destinationPath);
-    if (!destinationFile) {
-        std::cout << "Failed to open destination file: " << destinationPath << std::endl;
+    std::ofstream outputFile(fullDestination);
+    if (!outputFile) {
+        std::cout << "Failed to open destination file: " << fullDestination << std::endl;
         return;
     }
 
     // 写入文件内容到目标文件
-    destinationFile << file->content;
+    outputFile << sourceFile->content;
 
     std::cout << "File exported successfully." << std::endl;
 }

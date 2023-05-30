@@ -57,7 +57,8 @@ void FileSystemInterface::executeCommand(const std::string &command) const {
         handleExport(args);
     } else if (cmd == "exit") {
         std::cout <<  "Exit successfully." << std::endl;
-        exit(0);;
+        fileSystem->clearCurrentPointers();
+        exit(0);
     }
     else {
         std::cout << "Unknown command. Type 'help' for command list." << std::endl;
@@ -389,43 +390,7 @@ void FileSystemInterface::handleRename(const std::vector<std::string> &args) con
     const std::string& oldName = args[1];
     const std::string& newName = args[2];
 
-    // 检查是否存在同名的文件或文件夹
-    File* existingFile = fileSystem->getFileByName(oldName);
-    Directory* existingDirectory = fileSystem->getDirectoryByPath(oldName);
-
-    if (existingFile != nullptr && existingDirectory != nullptr) {
-        std::cout << "A file or directory with the same name already exists.\n";
-        std::cout << "Please select the object to rename:\n";
-        std::cout << "1. File\n";
-        std::cout << "2. Directory\n";
-        std::cout << "Enter your choice (1 or 2): ";
-
-        std::string choiceStr;
-        std::getline(std::cin, choiceStr);
-        int choice = std::stoi(choiceStr);
-
-        if (choice == 1) {
-            std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
-            existingFile->name = newName;
-            std::cout << "File renamed successfully.\n";
-        } else if (choice == 2) {
-            std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
-            existingDirectory->name = newName;
-            std::cout << "Directory renamed successfully.\n";
-        } else {
-            std::cout << "Invalid choice.\n";
-        }
-    } else if(existingFile != nullptr) {
-        std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
-        existingFile->name = newName;
-        std::cout << "File renamed successfully.\n";
-    } else if(existingDirectory != nullptr) {
-        std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
-        existingDirectory->name = newName;
-        std::cout << "Directory renamed successfully.\n";
-    } else {
-        std::cout << "No file or directory found with the given name.\n";
-    }
+    fileSystem->rename(oldName, newName);
 }
 
 void FileSystemInterface::handleImport(const std::vector<std::string> &args) const {
@@ -437,28 +402,7 @@ void FileSystemInterface::handleImport(const std::vector<std::string> &args) con
     const std::string& destinationPath = args[1];
     const std::string& sourceName = args[2];
 
-    // 打开源文件
-    std::ifstream inputFile(destinationPath + '\\' + sourceName);
-    if (!inputFile) {
-        std::cout << "Failed to open source file: " << sourceName << std::endl;
-        return;
-    }
-
-    // 读取源文件内容
-    std::stringstream buffer;
-    buffer << inputFile.rdbuf();
-    std::string fileContent = buffer.str();
-
-    // 创建新文件
-    File newFile;
-    newFile.name = sourceName;
-    newFile.content = fileContent;
-
-    // 导入文件到当前目录
-    Directory* currentDirectory = fileSystem->currentDirectory;
-    currentDirectory->files.push_back(newFile);
-
-    std::cout << "File imported successfully." << std::endl;
+    fileSystem->importFile(destinationPath, sourceName);
 }
 
 void FileSystemInterface::handleExport(const std::vector<std::string> &args) const {
@@ -472,26 +416,6 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
     const std::string& sourceName = args[1];
     const std::string& destinationPath = args[2];
 
-    // 检查源文件是否存在
-    File* sourceFile = fileSystem->getFileByName(sourceName);
-    if (sourceFile == nullptr) {
-        std::cout << "File not found: " << sourceName << std::endl;
-        return;
-    }
-
-    // 构建完整的目标路径
-    std::string fullDestination = destinationPath + "\\" + sourceName;
-
-    // 打开目标文件
-    std::ofstream outputFile(fullDestination);
-    if (!outputFile) {
-        std::cout << "Failed to open destination file: " << fullDestination << std::endl;
-        return;
-    }
-
-    // 写入文件内容到目标文件
-    outputFile << sourceFile->content;
-
-    std::cout << "File exported successfully." << std::endl;
+    fileSystem->exportFile(sourceName, destinationPath);
 }
 
