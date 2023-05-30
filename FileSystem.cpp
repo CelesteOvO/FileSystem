@@ -302,6 +302,65 @@ std::string FileSystem::getDirectoryPath(Directory* directory) {
     return path;
 }
 
+void FileSystem::saveFileSystem(const FileSystem &fileSystem, const std::string &fileName) {
+    std::ofstream outputFile(fileName, std::ios::binary);
+
+    // 检查文件是否成功打开
+    if (!outputFile) {
+        std::cout << "Failed to open file for writing: " << fileName << std::endl;
+        return;
+    }
+
+    // 保存根目录
+    saveDirectory(fileSystem.root, outputFile);
+
+    // 关闭文件
+    outputFile.close();
+
+    std::cout << "Virtual file system saved to: " << fileName << std::endl;
+}
+
+void FileSystem::saveDirectory(const Directory &directory, std::ofstream &outputFile) {
+    // 保存目录名
+    saveString(directory.name, outputFile);
+
+    // 保存子目录数量
+    int numSubdirectories = directory.subdirectories.size();
+    outputFile.write(reinterpret_cast<const char*>(&numSubdirectories), sizeof(int));
+
+    // 递归保存子目录
+    for (const auto& subdirectory : directory.subdirectories) {
+        saveDirectory(subdirectory, outputFile);
+    }
+
+    // 保存文件数量
+    int numFiles = directory.files.size();
+    outputFile.write(reinterpret_cast<const char*>(&numFiles), sizeof(int));
+
+    // 保存文件
+    for (const auto& file : directory.files) {
+        saveFile(file, outputFile);
+    }
+}
+
+void FileSystem::saveFile(const File &file, std::ofstream &outputFile) {
+    // 保存文件名
+    saveString(file.name, outputFile);
+
+    // 保存文件内容
+    saveString(file.content, outputFile);
+}
+
+void FileSystem::saveString(const std::string &str, std::ofstream &outputFile) {
+    // 保存字符串长度
+    int length = str.length();
+    outputFile.write(reinterpret_cast<const char*>(&length), sizeof(int));
+
+    // 保存字符串内容
+    outputFile.write(str.c_str(), length);
+}
+
+
 
 
 

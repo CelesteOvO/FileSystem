@@ -59,6 +59,12 @@ void FileSystemInterface::executeCommand(const std::string &command) const {
         std::cout <<  "Exit successfully." << std::endl;
         fileSystem->clearCurrentPointers();
         exit(0);
+    } else if (cmd == "save") {
+        std::cout << "Saving file system..." << std::endl;
+        fileSystem->saveFileSystem(*fileSystem, currentUser->username);
+    } else if ( cmd == "load"){
+        std::cout << "Loading file system..." << std::endl;
+        loadFileSystem(currentUser->username);
     }
     else {
         std::cout << "Unknown command. Type 'help' for command list." << std::endl;
@@ -419,3 +425,66 @@ void FileSystemInterface::handleExport(const std::vector<std::string> &args) con
     fileSystem->exportFile(sourceName, destinationPath);
 }
 
+void FileSystemInterface::loadFileSystem(const std::string &filePath) const {
+    std::ifstream file(filePath, std::ios::binary);
+    if (!file) {
+        std::cout << "Failed to open file: " << filePath << std::endl;
+    }
+
+    // 读取根目录
+    fileSystem->root = loadDirectory(file);
+
+    file.close();
+}
+
+Directory FileSystemInterface::loadDirectory(std::ifstream &inputFile) const{
+    Directory directory;
+
+    // 读取目录名称
+    directory.name = loadString(inputFile);
+
+    // 读取子目录数量
+    int numSubdirectories;
+    inputFile.read(reinterpret_cast<char*>(&numSubdirectories), sizeof(int));
+
+    // 读取子目录
+    for (int i = 0; i < numSubdirectories; ++i) {
+        directory.subdirectories.push_back(loadDirectory(inputFile));
+    }
+
+    // 读取文件数量
+    int numFiles;
+    inputFile.read(reinterpret_cast<char*>(&numFiles), sizeof(int));
+
+    // 读取文件
+    for (int i = 0; i < numFiles; ++i) {
+        directory.files.push_back(loadFile(inputFile));
+    }
+
+    return directory;
+}
+
+File FileSystemInterface::loadFile(std::ifstream &inputFile) {
+    File file;
+
+    // 读取文件名称
+    file.name = loadString(inputFile);
+
+    // 读取文件内容
+    file.content = loadString(inputFile);
+
+    return file;
+}
+
+std::string FileSystemInterface::loadString(std::ifstream &inputFile) {
+    // 读取字符串长度
+    int length;
+    inputFile.read(reinterpret_cast<char*>(&length), sizeof(int));
+
+    // 读取字符串内容
+    std::string str;
+    str.resize(length);
+    inputFile.read(&str[0], length);
+
+    return str;
+}

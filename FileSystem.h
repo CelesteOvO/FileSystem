@@ -92,7 +92,6 @@ public:
     // 导出文件到本地磁盘
     void exportFile(const std::string& sourceName, const std::string& destinationPath) const;
 
-
 public:
     // 辅助函数：根据文件名获取文件指针
     File* getFileByName(const std::string& fileName) const;
@@ -111,6 +110,20 @@ public:
 
     // 辅助函数：清空当前目录和文件的指针
     void clearCurrentPointers();
+
+public:
+    // 保存文件系统到本地磁盘
+    void saveFileSystem(const FileSystem& fileSystem, const std::string& fileName);
+
+    // 保存文件夹
+    void saveDirectory(const Directory& directory, std::ofstream& outputFile);
+
+    // 保存文件
+    static void saveFile(const File& file, std::ofstream& outputFile);
+
+    // 保存字符
+    static void saveString(const std::string& str, std::ofstream& outputFile);
+
 };
 
 #endif //FILESYSTEM_FILESYSTEM_H

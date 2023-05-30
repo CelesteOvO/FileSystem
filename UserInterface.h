@@ -58,7 +58,19 @@ public:
     static void handleVer();
     void handleRename(const std::vector<std::string>& args) const;
     void handleImport(const std::vector<std::string>& args) const;
-    void handleExport(const std::vector<std::string>& args) const;;
+    void handleExport(const std::vector<std::string>& args) const;
+public:
+    // 从本地磁盘读取文件系统
+    void loadFileSystem(const std::string& filePath) const;
+
+    // 从本地磁盘读取文件夹
+    Directory loadDirectory(std::ifstream &inputFile) const;
+
+    // 从本地磁盘读取文件
+    static File loadFile(std::ifstream &inputFile);
+
+    // 从本地磁盘读取字符
+    static std::string loadString(std::ifstream &inputFile);
 };
 
 #endif //FILESYSTEM_USERINTERFACE_H
