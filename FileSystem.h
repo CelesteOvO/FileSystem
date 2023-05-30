@@ -72,7 +72,7 @@ public:
     void ReWriteFile(const std::string& content) const;
 
     // 指定位置追加文件内容
-    void appendFileAtPosition(const std::string& content, int position);
+    void appendFileAtPosition(const std::string& content, int position) const;
 
     // 关闭文件
     void closeFile();

@@ -60,7 +60,7 @@ public:
     static void handleVer();
     void handleRename(const std::vector<std::string>& args) const;
     void handleImport(const std::vector<std::string>& args) const;
-    void handleExport(const std::vector<std::string>& args) const;
+    void handleExport(const std::vector<std::string>& args) const;;
 };
 
 #endif //FILESYSTEM_USERINTERFACE_H

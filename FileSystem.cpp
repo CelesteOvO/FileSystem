@@ -4,10 +4,12 @@
 
 #include "FileSystem.h"
 
+#include <utility>
+
 void FileSystem::changeDirectory(const std::string &path) {
-    Directory* directory = getDirectoryByPath(path);
+    Directory* directory = getDirectoryByPath(path); // 根据路径获取目录
     if (directory) {
-        currentDirectory = directory;
+        currentDirectory = directory; // 切换当前目录
     } else {
         std::cout << "Invalid path." << std::endl;
     }
@@ -26,16 +28,17 @@ void FileSystem::listDirectory() const {
 }
 
 void FileSystem::createDirectory(const std::string &directoryName) const {
-    Directory newDirectory;
-    newDirectory.name = directoryName;
-    newDirectory.parent = currentDirectory;
-    currentDirectory->subdirectories.push_back(newDirectory);
+    Directory newDirectory; // 创建新目录
+    newDirectory.name = directoryName; // 设置目录名
+    newDirectory.parent = currentDirectory; // 设置父目录
+    currentDirectory->subdirectories.push_back(newDirectory); // 将新目录添加到当前目录的子目录中
 }
 
 void FileSystem::removeDirectory(const std::string &directoryName) const {
     for (auto it = currentDirectory->subdirectories.begin(); it != currentDirectory->subdirectories.end(); ++it) {
-        if (it->name == directoryName) {
-            currentDirectory->subdirectories.erase(it);
+        // 遍历当前目录的子目录
+        if (it->name == directoryName) { // 找到目标目录
+            currentDirectory->subdirectories.erase(it); // 删除目标目录
             return;
         }
     }
@@ -43,16 +46,17 @@ void FileSystem::removeDirectory(const std::string &directoryName) const {
 }
 
 void FileSystem::createFile(const std::string &fileName, std::string content) const {
-    File newFile;
-    newFile.name = fileName;
-    newFile.content = content;
-    currentDirectory->files.push_back(newFile);
+    File newFile; // 创建新文件
+    newFile.name = fileName; // 设置文件名
+    newFile.content = std::move(content); // 设置文件内容
+    newFile.parentDirectory = currentDirectory; // 设置父目录
+    currentDirectory->files.push_back(newFile); // 将新文件添加到当前目录的子文件中
 }
 
 void FileSystem::openFile(const std::string &fileName) {
-    for (auto& file : currentDirectory->files) {
-        if (file.name == fileName) {
-            currentFile = &file;
+    for (auto& file : currentDirectory->files) { // 遍历当前目录的子文件
+        if (file.name == fileName) { // 找到目标文件
+            currentFile = &file; // 打开目标文件
             return;
         }
     }
@@ -75,9 +79,9 @@ void FileSystem::ReWriteFile(const std::string &content) const {
     }
 }
 
-void FileSystem::appendFileAtPosition(const std::string &content, int position) {
+void FileSystem::appendFileAtPosition(const std::string &content, int position) const {
     if (currentFile) {
-        if (position >= 0 && position <= currentFile->content.length()) {
+        if (position >= 0 && position <= currentFile->content.length()) { // 检查位置是否合法
             currentFile->content.insert(position, content);
             std::cout << "Content appended at position " << position << " successfully." << std::endl;
         } else {
@@ -97,7 +101,7 @@ void FileSystem::closeFile() {
 void FileSystem::seekFile(int position) {
     if (currentFile) {
         if (position >= 0 && position <= currentFile->content.length()) {
-            currentFilePointer = position;
+            currentFilePointer = position; // 移动文件指针
             std::cout << "File pointer is moved to position " << position << "." << std::endl;
         } else {
             std::cout << "Invalid file position." << std::endl;

@@ -55,7 +55,11 @@ void FileSystemInterface::executeCommand(const std::string &command) const {
         handleImport(args);
     } else if (cmd == "export") {
         handleExport(args);
-    } else {
+    } else if (cmd == "exit") {
+        std::cout <<  "Exit successfully." << std::endl;
+        exit(0);;
+    }
+    else {
         std::cout << "Unknown command. Type 'help' for command list." << std::endl;
     }
 }
@@ -219,15 +223,63 @@ void FileSystemInterface::handleWrite(const std::vector<std::string> &args) cons
         return;
     }
 
-    // 获取用户输入的内容
-    std::string content;
-    std::cout << "Enter the content to write: ";
-    std::getline(std::cin, content);
+    if(fileSystem->currentFile->content.empty()){
+        // 获取用户输入的内容
+        std::string content;
+        std::cout << "Enter the content to write: ";
+        std::getline(std::cin, content);
 
-    // 调用文件系统类的重写文件内容方法
-    fileSystem->ReWriteFile(content);
-
-    std::cout << "Content has been written to the file." << std::endl;
+        // 调用文件系统类的重写文件内容方法
+        fileSystem->ReWriteFile(content);
+        fileSystem->closeFile();
+    }else{
+        std::cout << "The content of the file is: " << fileSystem->currentFile->content << std::endl;
+        std::cout << "Do you want to append to the file? (y/n) " << std::endl;
+        std::string answer;
+        std::cin >> answer;
+        if(answer == "y" || answer == "Y"){
+            std::cout << "Please select append mode: " << std::endl;
+            std::cout << "1. Append to the end of the file" << std::endl;
+            std::cout << "2. Write at a specific position" << std::endl;
+            int type;
+            std::cin >> type;
+            if(type == 1)
+            {
+                // 获取用户输入的内容
+                std::string content;
+                std::cout << "Enter the content to write: ";
+                std::cin >> content;
+                // 调用文件系统类的写文件内容方法
+                fileSystem->appendFileAtPosition(content, fileSystem->currentFile->content.size());
+                std::cout << "Content has been written to the file." << std::endl;
+                fileSystem->closeFile();
+            }else if(type == 2) {
+                std::cout << "Current File pointer is at position: " << fileSystem-> currentFilePointer << std::endl;
+                std::cout << "Do you want to change the file pointer? (y/n) " << std::endl;
+                std::string answer1;
+                std::cin >> answer1;
+                if(answer1 == "y" || answer1 == "Y"){
+                    std::cout << "Enter the position to write: ";
+                    int position;
+                    std::cin >> position;
+                    fileSystem->currentFilePointer = position;
+                }
+                std::cout << "Enter the content to write: ";
+                std::string content;
+                std::cin >> content;
+                fileSystem->appendFileAtPosition(content, fileSystem->currentFilePointer);
+                std::cout << "Content has been written to the file." << std::endl;
+                fileSystem->closeFile();
+            }else{
+                std::cout << "Invalid command." << std::endl;
+                fileSystem->closeFile();
+                return;
+            }
+        }else{
+            fileSystem->closeFile();
+            std::cout << "Closing the file..." << std::endl;
+        }
+    }
 }
 
 void FileSystemInterface::handleClose(const std::vector<std::string> &args) const {
@@ -287,7 +339,7 @@ void FileSystemInterface::handleHelp() {
     std::cout << "create <file>       : Create a new file." << std::endl;
     std::cout << "open <file>         : Open a file for reading or writing." << std::endl;
     std::cout << "read                : Read the content of the current open file." << std::endl;
-    std::cout << "write <content>     : Write content to the current open file." << std::endl;
+    std::cout << "write <file>        : Write content to the current open file." << std::endl;
     std::cout << "close               : Close the current open file." << std::endl;
     std::cout << "lseek <position>    : Move the file pointer to the specified position." << std::endl;
     std::cout << "help                : Display this help message." << std::endl;
@@ -296,6 +348,7 @@ void FileSystemInterface::handleHelp() {
     std::cout << "rename <old> <new>  : Rename a file or directory." << std::endl;
     std::cout << "import <source> <destination> : Import a file from the local disk to the virtual disk." << std::endl;
     std::cout << "export <destination> <source> : Export a file from the virtual disk to the local disk." << std::endl;
+    std::cout << "exit                : Exit the program." << std::endl;
     std::cout << "========================================================" << std::endl;
 }
 
@@ -352,21 +405,13 @@ void FileSystemInterface::handleRename(const std::vector<std::string> &args) con
         int choice = std::stoi(choiceStr);
 
         if (choice == 1) {
-            if (existingFile != nullptr) {
-                std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
-                existingFile->name = newName;
-                std::cout << "File renamed successfully.\n";
-            } else {
-                std::cout << "Invalid choice. No file found with the given name.\n";
-            }
+            std::cout << "Renaming file '" << oldName << "' to '" << newName << "'...\n";
+            existingFile->name = newName;
+            std::cout << "File renamed successfully.\n";
         } else if (choice == 2) {
-            if (existingDirectory != nullptr) {
-                std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
-                existingDirectory->name = newName;
-                std::cout << "Directory renamed successfully.\n";
-            } else {
-                std::cout << "Invalid choice. No directory found with the given name.\n";
-            }
+            std::cout << "Renaming directory '" << oldName << "' to '" << newName << "'...\n";
+            existingDirectory->name = newName;
+            std::cout << "Directory renamed successfully.\n";
         } else {
             std::cout << "Invalid choice.\n";
         }
