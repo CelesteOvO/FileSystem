@@ -42,7 +42,7 @@ public:
 public:
     FileSystem() {
         // 初始化根目录
-        root.name = "root";
+        root.name = "lyf";
         root.parent = nullptr;
         currentDirectory = &root;
         currentFile = nullptr;

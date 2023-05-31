@@ -2,7 +2,7 @@
 // Created by 86151 on 2023/5/29.
 //
 
-#include "UserInterface.h"
+#include "FileSystemInterface.h"
 
 void FileSystemInterface::start() {
     displayWelcomeMessage();
@@ -61,10 +61,10 @@ void FileSystemInterface::executeCommand(const std::string &command) const {
         exit(0);
     } else if (cmd == "save") {
         std::cout << "Saving file system..." << std::endl;
-        fileSystem->saveFileSystem(*fileSystem, currentUser->username);
+        fileSystem->saveFileSystem(*fileSystem, "liyifan"); /// TODO
     } else if ( cmd == "load"){
         std::cout << "Loading file system..." << std::endl;
-        loadFileSystem(currentUser->username);
+        loadFileSystem("liyifan");
     }
     else {
         std::cout << "Unknown command. Type 'help' for command list." << std::endl;
@@ -86,13 +86,13 @@ std::vector<std::string> FileSystemInterface::parseCommandArgs(const std::string
 
 void FileSystemInterface::displayPrompt() const {
     // 获取当前用户信息
-    std::string username = currentUser->username;
+    // std::string username = currentUser->username;
 
     // 获取当前目录信息
     std::string currentDir = fileSystem->getDirectoryPath(fileSystem->currentDirectory);
 
     // 显示命令提示符
-    std::cout << username << "\\" << currentDir /*<< ">"*/;
+    std::cout /*<< username << "\\" */<< currentDir /*<< ">"*/;
 }
 
 void FileSystemInterface::displayWelcomeMessage() {

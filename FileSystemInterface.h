@@ -2,27 +2,19 @@
 // Created by 86151 on 2023/5/29.
 //
 
-#ifndef FILESYSTEM_USERINTERFACE_H
-#define FILESYSTEM_USERINTERFACE_H
+#ifndef FILESYSTEM_FILESYSTEMINTERFACE_H
+#define FILESYSTEM_FILESYSTEMINTERFACE_H
 
 #include <iostream>
+#include <thread>
 #include "FileSystem.h"
-
-struct User {
-    std::string username;
-    std::string password;
-    FileSystem fileSystem;
-
-    User(std::string name, std::string pass, FileSystem system) : username(std::move(name)), password(std::move(pass)), fileSystem(std::move(system)) {};
-};
 
 // 文件系统接口类
 class FileSystemInterface {
 public:
     FileSystem* fileSystem;
-    User* currentUser;
 public:
-    FileSystemInterface(FileSystem* fs, User* user) : fileSystem(fs), currentUser(user) {}
+    FileSystemInterface(FileSystem* fs) : fileSystem(fs) {}
 public:
     // 启动文件系统
     void start();
@@ -73,4 +65,4 @@ public:
     static std::string loadString(std::ifstream &inputFile);
 };
 
-#endif //FILESYSTEM_USERINTERFACE_H
+#endif //FILESYSTEM_FILESYSTEMINTERFACE_H
