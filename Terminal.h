@@ -17,9 +17,15 @@ class Terminal
 {
 public:
     FileSystem* fileSystem;
+    Directory* ThreadCurrentDirectory; // 当前目录
+    File* ThreadCurrentFile; // 当前文件
+    int ThreadCurrentFilePointer; // 当前文件指针
 public:
     Terminal(FileSystem* fs) : commandHistoryIndex(0), isRunning(true), fileSystem(fs){
         memset(command, 0, sizeof(command)); // 初始化输入缓冲区
+        ThreadCurrentDirectory = &fileSystem->root;
+        ThreadCurrentFile = nullptr;
+        ThreadCurrentFilePointer = 0;
     }
     void Run();
 

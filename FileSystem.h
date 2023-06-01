@@ -12,6 +12,7 @@
 #include <vector>
 #include <chrono>
 #include <stack>
+#include <mutex>
 #include <windows.h>
 
 struct Directory;

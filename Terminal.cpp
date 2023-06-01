@@ -18,7 +18,7 @@ void Terminal::TerminalThread() {
     while (isRunning)
     {
         std::string commands = GetNextCommand();
-        std::string currentDir = FileSystem::getDirectoryPath(fileSystem->currentDirectory);
+        std::string currentDir = FileSystem::getDirectoryPath(ThreadCurrentDirectory);
         AddOutput(currentDir + " > " + commands);
         ExecuteCommand();
     }
@@ -129,13 +129,14 @@ void Terminal::handleCd(const std::vector<std::string> &args) {
 
     Directory* directory = fileSystem->getDirectoryByPath(directoryPath); // 根据路径获取目录
     if (directory) {
-        fileSystem->currentDirectory = directory; // 切换当前目录
+        ThreadCurrentDirectory = directory; // 切换当前目录
     } else {
         AddOutput("Invalid path.");
     }
 }
 
 void Terminal::handleDir(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
     // 检查参数数量是否正确
     if (args.size() != 1) {
         AddOutput("Invalid command. Usage: dir");
@@ -153,9 +154,11 @@ void Terminal::handleDir(const std::vector<std::string> &args) {
     for (const auto& file : fileSystem->currentDirectory->files) {
         AddOutput("  " + file.name);
     }
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleMkdir(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
 // 检查参数数量是否正确
     if (args.size() != 2) {
         AddOutput("Invalid command. Usage: mkdir <directory>");
@@ -197,9 +200,11 @@ void Terminal::handleMkdir(const std::vector<std::string> &args) {
     newDirectory.name = newName; // 设置目录名
     newDirectory.parent = fileSystem->currentDirectory; // 设置父目录
     fileSystem->currentDirectory->subdirectories.push_back(newDirectory); // 将新目录添加到当前目录的子目录中
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleRmdir(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
 // 检查参数数量是否正确
     if (args.size() != 2) {
         AddOutput("Invalid command. Usage: rmdir <directory_name>");
@@ -219,9 +224,11 @@ void Terminal::handleRmdir(const std::vector<std::string> &args) {
         }
     }
     AddOutput("Directory not found.");
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleCreate(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
     // 检查参数数量是否正确
     if (args.size() != 2) {
         AddOutput("Invalid command. Usage: create <file_name>");
@@ -233,9 +240,11 @@ void Terminal::handleCreate(const std::vector<std::string> &args) {
 
     // 调用文件系统类的创建文件方法
     fileSystem->createFile(fileName, "");
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleOpen(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
     // 检查参数数量是否正确
     if (args.size() != 2) {
         AddOutput("Invalid command. Usage: open <file_name>");
@@ -249,14 +258,17 @@ void Terminal::handleOpen(const std::vector<std::string> &args) {
     // fileSystem->openFile(fileName);
     for (auto& file : fileSystem->currentDirectory->files) { // 遍历当前目录的子文件
         if (file.name == fileName) { // 找到目标文件
-            fileSystem->currentFile = &file; // 打开目标文件
+            ThreadCurrentFile = &file; // 打开目标文件
             return;
         }
     }
     AddOutput("File not found.");
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleRead(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
+    fileSystem->currentFile = ThreadCurrentFile;
     // 检查参数数量是否正确
     if (args.size() != 1) {
         AddOutput("Invalid command. Usage: read");
@@ -270,9 +282,14 @@ void Terminal::handleRead(const std::vector<std::string> &args) {
     } else {
         AddOutput("No file is currently open.");
     }
+    fileSystem->currentDirectory = nullptr;
+    fileSystem->currentFile = nullptr;
 }
 
 void Terminal::handleWrite(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
+    fileSystem->currentFile = ThreadCurrentFile;
+    fileSystem-> currentFilePointer = ThreadCurrentFilePointer;
 // 检查参数数量是否正确
     if (args.size() != 2) {
         AddOutput( "Invalid command. Usage: write <file_name>");
@@ -298,7 +315,6 @@ void Terminal::handleWrite(const std::vector<std::string> &args) {
 
         // 调用文件系统类的重写文件内容方法
         fileSystem->ReWriteFile(content);
-        fileSystem->closeFile();
     }else{
         AddOutput("The content of the file is: " + fileSystem->currentFile->content );
         AddOutput("Do you want to append to the file? (y/n) " );
@@ -336,20 +352,22 @@ void Terminal::handleWrite(const std::vector<std::string> &args) {
                 std::cin >> content;
                 fileSystem->appendFileAtPosition(content, fileSystem->currentFilePointer);
                 AddOutput("Content has been written to the file." );
-                fileSystem->closeFile();
             }else{
                 AddOutput("Invalid command." );
-                fileSystem->closeFile();
                 return;
             }
         }else{
-            fileSystem->closeFile();
             AddOutput("Closing the file..." );
         }
     }
+    fileSystem->currentDirectory = nullptr;
+    fileSystem->currentFile = nullptr;
+    fileSystem-> currentFilePointer = 0;
 }
 
 void Terminal::handleClose(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
+    fileSystem->currentFile = ThreadCurrentFile;
 // 检查参数数量是否正确
     if (args.size() != 1) {
         AddOutput("Invalid command. Usage: close");
@@ -363,12 +381,18 @@ void Terminal::handleClose(const std::vector<std::string> &args) {
     }
 
     // 关闭文件
-    fileSystem->closeFile();
+    //fileSystem->closeFile();
+    ThreadCurrentFile= nullptr;
+    ThreadCurrentFilePointer = 0;
 
     AddOutput("File has been closed.");
+    fileSystem->currentDirectory = nullptr;
+    fileSystem->currentFile = nullptr;
 }
 
 void Terminal::handleLseek(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
+    fileSystem->currentFile = ThreadCurrentFile;
     // 检查参数数量是否正确
     if (args.size() != 2) {
         AddOutput("Invalid command. Usage: lseek <position>");
@@ -391,7 +415,20 @@ void Terminal::handleLseek(const std::vector<std::string> &args) {
     }
 
     // 定位文件指针
-    fileSystem->seekFile(position);
+
+    if (fileSystem->currentFile) {
+        if (position >= 0 && position <= fileSystem->currentFile->content.length()) {
+            ThreadCurrentFilePointer = position; // 移动文件指针
+            std::cout << "File pointer is moved to position " << position << "." << std::endl;
+        } else {
+            std::cout << "Invalid file position." << std::endl;
+        }
+    } else {
+        std::cout << "No file is currently open." << std::endl;
+    }
+
+    fileSystem->currentDirectory = nullptr;
+    fileSystem->currentFile = nullptr;
 }
 
 void Terminal::handleHelp() {
@@ -448,6 +485,7 @@ void Terminal::handleVer() {
 }
 
 void Terminal::handleRename(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
     if (args.size() != 3) {
         AddOutput("Invalid arguments. Usage: rename <old_name> <new_name>");
         return;
@@ -492,6 +530,7 @@ void Terminal::handleRename(const std::vector<std::string> &args) {
     } else {
         AddOutput( "No file or directory found with the given name.");
     }
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleImport(const std::vector<std::string> &args) {
@@ -504,9 +543,11 @@ void Terminal::handleImport(const std::vector<std::string> &args) {
     const std::string& sourceName = args[2];
 
     fileSystem->importFile(destinationPath, sourceName);
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::handleExport(const std::vector<std::string> &args) {
+    fileSystem->currentDirectory = ThreadCurrentDirectory;
     // 检查参数数量
     if (args.size() < 2) {
         AddOutput("Invalid command syntax. Usage: export <sourceName> <destinationPath>");
@@ -518,6 +559,7 @@ void Terminal::handleExport(const std::vector<std::string> &args) {
     const std::string& destinationPath = args[2];
 
     fileSystem->exportFile(sourceName, destinationPath);
+    fileSystem->currentDirectory = nullptr;
 }
 
 void Terminal::loadFileSystem(const std::string &filePath) {
