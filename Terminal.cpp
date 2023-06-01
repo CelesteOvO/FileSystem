@@ -448,8 +448,8 @@ void Terminal::handleHelp() {
     AddOutput("time                : Display the system time." );
     AddOutput("ver                 : Display the system version." );
     AddOutput("rename <old> <new>  : Rename a file or directory." );
-    AddOutput("import <source> <destination> : Import a file from the local disk to the virtual disk." );
-    AddOutput("export <destination> <source> : Export a file from the virtual disk to the local disk." );
+    AddOutput("import <destination> <source> : Import a file from the local disk to the virtual disk." );
+    AddOutput("export <source> <destination> : Export a file from the virtual disk to the local disk." );
     AddOutput("exit                : Exit the program." );
     AddOutput("========================================================" );
 }
