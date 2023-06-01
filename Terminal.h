@@ -34,7 +34,6 @@ public:
     std::string GetNextCommand();
 
     void AddCommand(const std::string& command);
-    void AddOperation(const std::string& operations);
 public:
     // 执行具体的命令
     void handleCd(const std::vector<std::string>& args) ;
@@ -57,7 +56,7 @@ public:
     static std::vector<std::string> parseCommandArgs(const std::string &command);
 
     // 从本地磁盘读取文件系统
-    void loadFileSystem(const std::string& filePath) const;
+    void loadFileSystem(const std::string& filePath);
 
     // 从本地磁盘读取文件夹
     Directory loadDirectory(std::ifstream &inputFile) const;
@@ -70,14 +69,12 @@ public:
 private:
     std::thread thread;
     std::deque<std::string> commandHistory;
-    std::deque<std::string> operationsHistory;
     std::mutex commandMutex;
     std::condition_variable commandReady;
     size_t commandHistoryIndex;
     std::atomic<bool> isRunning;
 public:
     char command[256];
-    char operation[256];
     std::deque<std::string> outputBuffer;
 };
 

@@ -39,6 +39,7 @@ int main() {
     return 0;
 }*/
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include "imgui/backends/imgui_impl_glfw.h"
@@ -65,17 +66,11 @@ void TerminalWindow(Terminal& terminal)
 
     // 模拟终端的输入行
     ImGui::Separator();
-    static char commands[256] = "";
-    if (ImGui::InputText("Command", commands, sizeof(terminal.command), ImGuiInputTextFlags_EnterReturnsTrue))
+    //static char commands[256] = "";
+    if (ImGui::InputText("Command", terminal.command, sizeof(terminal.command), ImGuiInputTextFlags_EnterReturnsTrue))
     {
-        terminal.AddCommand(commands);
-        memset(commands, 0, sizeof(commands));
-    }
-    static char operations[256] = "";
-    if (ImGui::InputText("operation", operations, sizeof(terminal.command), ImGuiInputTextFlags_EnterReturnsTrue))
-    {
-        terminal.AddOperation(operations);
-        memset(operations, 0, sizeof(operations));
+        terminal.AddCommand(terminal.command);
+        //memset(terminal.command, 0, sizeof(terminal.command));
     }
 }
 
@@ -88,6 +83,10 @@ int main()
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "Multiple Terminals", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    // 初始化GLAD
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress))
+        throw std::runtime_error("Failed to initialize GLAD"),
 
     // 初始化Dear ImGui
     IMGUI_CHECKVERSION();
@@ -111,6 +110,9 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+
+        glClearColor(0,0,0,1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

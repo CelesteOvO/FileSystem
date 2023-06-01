@@ -2,6 +2,7 @@
 // Created by 86151 on 2023/6/1.
 //
 #include "Terminal.h"
+#include "imgui.h"
 
 void Terminal::Run() {
     thread = std::thread([this]() { TerminalThread(); });
@@ -47,7 +48,7 @@ void Terminal::ExecuteCommand() {
     } else if (cmd == "read") {
         handleRead(args);
     } else if (cmd == "write") {
-        //handleWrite(args);
+        handleWrite(args);
     } else if (cmd == "close") {
         handleClose(args);
     } else if (cmd == "lseek") {
@@ -59,7 +60,7 @@ void Terminal::ExecuteCommand() {
     } else if (cmd == "ver") {
         handleVer();
     } else if (cmd == "rename") {
-        // handleRename(args);
+        handleRename(args);
     } else if (cmd == "import") {
         handleImport(args);
     } else if (cmd == "export") {
@@ -98,12 +99,6 @@ void Terminal::AddCommand(const std::string &commands) {
     std::strncpy(this->command, commands.c_str(), sizeof(this->command));
     commandHistory.push_back(commands);
     commandReady.notify_one();
-}
-
-void Terminal::AddOperation(const std::string &operations) {
-    std::strncpy(this->operation, operations.c_str(), sizeof(this->operation));
-    operationsHistory.emplace_back(" ");
-    operationsHistory.push_back(operations);
 }
 
 std::vector<std::string> Terminal::parseCommandArgs(const std::string &commands) {
@@ -278,9 +273,9 @@ void Terminal::handleRead(const std::vector<std::string> &args) {
 }
 
 void Terminal::handleWrite(const std::vector<std::string> &args) {
-    // 检查参数数量是否正确
+// 检查参数数量是否正确
     if (args.size() != 2) {
-        AddOutput("Invalid command. Usage: write <file_name>");
+        AddOutput( "Invalid command. Usage: write <file_name>");
         return;
     }
     // 获取文件名
@@ -291,7 +286,7 @@ void Terminal::handleWrite(const std::vector<std::string> &args) {
 
     // 检查文件是否已打开
     if (fileSystem->currentFile == nullptr) {
-        AddOutput("No file is currently open.");
+        AddOutput("No file is currently open." );
         return;
     }
 
@@ -299,57 +294,57 @@ void Terminal::handleWrite(const std::vector<std::string> &args) {
         // 获取用户输入的内容
         std::string content;
         AddOutput("Enter the content to write: ");
-        //std::getline(std::cin, content);
+        std::getline(std::cin, content);
 
         // 调用文件系统类的重写文件内容方法
         fileSystem->ReWriteFile(content);
         fileSystem->closeFile();
     }else{
-        AddOutput("The content of the file is: ");
-        AddOutput("Do you want to append to the file? (y/n) ");
+        AddOutput("The content of the file is: " + fileSystem->currentFile->content );
+        AddOutput("Do you want to append to the file? (y/n) " );
         std::string answer;
         std::cin >> answer;
         if(answer == "y" || answer == "Y"){
-            std::cout << "Please select append mode: " << std::endl;
-            std::cout << "1. Append to the end of the file" << std::endl;
-            std::cout << "2. Write at a specific position" << std::endl;
+            AddOutput("Please select append mode: " );
+            AddOutput("1. Append to the end of the file" );
+            AddOutput("2. Write at a specific position" );
             int type;
             std::cin >> type;
             if(type == 1)
             {
                 // 获取用户输入的内容
                 std::string content;
-                std::cout << "Enter the content to write: ";
+                AddOutput("Enter the content to write: ");
                 std::cin >> content;
                 // 调用文件系统类的写文件内容方法
                 fileSystem->appendFileAtPosition(content, fileSystem->currentFile->content.size());
-                std::cout << "Content has been written to the file." << std::endl;
+                AddOutput("Content has been written to the file." );
                 fileSystem->closeFile();
             }else if(type == 2) {
-                std::cout << "Current File pointer is at position: " << fileSystem-> currentFilePointer << std::endl;
-                std::cout << "Do you want to change the file pointer? (y/n) " << std::endl;
+                AddOutput("Current File pointer is at position: " + fileSystem-> currentFilePointer );
+                AddOutput("Do you want to change the file pointer? (y/n) " );
                 std::string answer1;
                 std::cin >> answer1;
                 if(answer1 == "y" || answer1 == "Y"){
-                    std::cout << "Enter the position to write: ";
+                    AddOutput("Enter the position to write: ");
                     int position;
                     std::cin >> position;
                     fileSystem->currentFilePointer = position;
                 }
-                std::cout << "Enter the content to write: ";
+                AddOutput("Enter the content to write: ");
                 std::string content;
                 std::cin >> content;
                 fileSystem->appendFileAtPosition(content, fileSystem->currentFilePointer);
-                std::cout << "Content has been written to the file." << std::endl;
+                AddOutput("Content has been written to the file." );
                 fileSystem->closeFile();
             }else{
-                std::cout << "Invalid command." << std::endl;
+                AddOutput("Invalid command." );
                 fileSystem->closeFile();
                 return;
             }
         }else{
             fileSystem->closeFile();
-            std::cout << "Closing the file..." << std::endl;
+            AddOutput("Closing the file..." );
         }
     }
 }
@@ -454,14 +449,49 @@ void Terminal::handleVer() {
 
 void Terminal::handleRename(const std::vector<std::string> &args) {
     if (args.size() != 3) {
-        std::cout << "Invalid arguments. Usage: rename <old_name> <new_name>\n";
+        AddOutput("Invalid arguments. Usage: rename <old_name> <new_name>");
         return;
     }
 
     const std::string& oldName = args[1];
     const std::string& newName = args[2];
 
-    fileSystem->rename(oldName, newName);
+//    fileSystem->rename(oldName, newName);
+    File* existingFile = fileSystem->getFileByName(oldName);
+    Directory* existingDirectory = fileSystem->getDirectoryByName(oldName);
+
+    if (existingFile != nullptr && existingDirectory != nullptr) {
+        AddOutput( "A file or directory with the same name already exists.");
+        AddOutput( "Please select the object to rename:");
+        AddOutput( "1. File");
+        AddOutput( "2. Directory");
+        AddOutput( "Enter your choice (1 or 2): ");
+
+        int choice;
+        std::cin >> choice;
+
+        if (choice == 1) {
+            AddOutput( "Renaming file '" + oldName + "' to '" + newName + "'...");
+            existingFile->name = newName;
+            AddOutput( "File renamed successfully.");
+        } else if (choice == 2) {
+            AddOutput( "Renaming directory '" + oldName + "' to '" + newName + "'...");
+            existingDirectory->name = newName;
+            AddOutput( "Directory renamed successfully.");
+        } else {
+            AddOutput( "Invalid choice.");
+        }
+    } else if(existingFile != nullptr) {
+        AddOutput( "Renaming file '" + oldName + "' to '" + newName + "'...");
+        existingFile->name = newName;
+        AddOutput( "File renamed successfully.");
+    } else if(existingDirectory != nullptr) {
+        AddOutput( "Renaming directory '" + oldName + "' to '" + newName + "'...");
+        existingDirectory->name = newName;
+        AddOutput( "Directory renamed successfully.");
+    } else {
+        AddOutput( "No file or directory found with the given name.");
+    }
 }
 
 void Terminal::handleImport(const std::vector<std::string> &args) {
@@ -490,10 +520,10 @@ void Terminal::handleExport(const std::vector<std::string> &args) {
     fileSystem->exportFile(sourceName, destinationPath);
 }
 
-void Terminal::loadFileSystem(const std::string &filePath) const {
+void Terminal::loadFileSystem(const std::string &filePath) {
     std::ifstream file(filePath, std::ios::binary);
     if (!file) {
-        std::cout << "Failed to open file: " << filePath << std::endl;
+        AddOutput( "Failed to open file: " + filePath);
     }
 
     // 读取根目录
