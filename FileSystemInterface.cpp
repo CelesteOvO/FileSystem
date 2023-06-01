@@ -120,10 +120,10 @@ void FileSystemInterface::handleCd(const std::vector<std::string> &args) const {
         return;
     }
 
-    const std::string& directoryName = args[1];
+    const std::string& directoryPath = args[1];
 
     // 调用文件系统类的切换目录方法
-    fileSystem->changeDirectory(directoryName);
+    fileSystem->changeDirectory(directoryPath);
 }
 
 void FileSystemInterface::handleDir(const std::vector<std::string> &args) const {

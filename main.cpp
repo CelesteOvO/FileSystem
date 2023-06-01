@@ -49,7 +49,6 @@ int main() {
 #include <condition_variable>
 #include <atomic>
 #include <cstring>
-#include <algorithm>
 #include <string>
 
 
@@ -66,19 +65,27 @@ void TerminalWindow(Terminal& terminal)
 
     // 模拟终端的输入行
     ImGui::Separator();
-    //static char command[256] = "";
-    if (ImGui::InputText("Command", terminal.command, sizeof(terminal.command), ImGuiInputTextFlags_EnterReturnsTrue))
+    static char commands[256] = "";
+    if (ImGui::InputText("Command", commands, sizeof(terminal.command), ImGuiInputTextFlags_EnterReturnsTrue))
     {
-        terminal.AddCommand(terminal.command);
-        memset(terminal.command, 0, sizeof(terminal.command));
+        terminal.AddCommand(commands);
+        memset(commands, 0, sizeof(commands));
+    }
+    static char operations[256] = "";
+    if (ImGui::InputText("operation", operations, sizeof(terminal.command), ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        terminal.AddOperation(operations);
+        memset(operations, 0, sizeof(operations));
     }
 }
 
 int main()
 {
+    FileSystem fileSystem;
+
     // 初始化GLFW
     glfwInit();
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Multiple Terminals", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Multiple Terminals", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -95,7 +102,7 @@ int main()
     constexpr int numTerminals = 2;
     for (int i = 0; i < numTerminals; i++)
     {
-        Terminal* terminal = new Terminal(); // 分配内存并初始化终端对象
+        Terminal* terminal = new Terminal(&fileSystem); // 分配内存并初始化终端对象
         terminals.emplace_back(terminal); // 添加指针到向量中
         terminals[i]->Run();
     }
